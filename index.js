@@ -41,5 +41,5 @@ if (emsgBox) {
     });
     console.log(unwrap(emsgBox));
 } else {
-    throw Error('No emsg box present in segment.');
+    console.warn('No emsg box present in segment.');
 }
