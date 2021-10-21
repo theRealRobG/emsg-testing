@@ -1,0 +1,15 @@
+{
+  "name": "emsg-testing",
+  "version": "0.1.0",
+  "description": "Script to help reading emsg from downloaded segments",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "codem-isoboxer": "^0.3.7",
+    "minimist": "^1.2.5"
+  }
+}
