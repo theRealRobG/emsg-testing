@@ -7,41 +7,45 @@ if (!filePath) {
     throw Error('No file argument provided (provide relative path using --file argument).');
 }
 
-const arrayBuffer = new Uint8Array(fs.readFileSync(filePath)).buffer;
-const parsedFile  = ISOBoxer.parseBuffer(arrayBuffer);
-const emsgBoxes = parsedFile.boxes.filter((box) => box.type == 'emsg');
+function logBoxesFromArrayBuffer(arrayBuffer) {
+    const parsedFile  = ISOBoxer.parseBuffer(arrayBuffer);
+    const emsgBoxes = parsedFile.boxes.filter((box) => box.type == 'emsg');
 
-if (emsgBoxes.length == 0) {
-    console.warn('No emsg box present in segment.');
-} else {
-    emsgBoxes.forEach((emsgBox) => {
-        const unwrap = ({
-            size,
-            type,
-            version,
-            flags,
-            scheme_id_uri,
-            value,
-            timescale,
-            presentation_time,
-            presentation_time_delta,
-            event_duration,
-            id,
-            message_data
-        }) => ({
-            size,
-            type,
-            version,
-            flags,
-            scheme_id_uri,
-            value,
-            timescale,
-            presentation_time,
-            presentation_time_delta,
-            event_duration,
-            id,
-            message_data: (new TextDecoder()).decode(message_data)
+    if (emsgBoxes.length == 0) {
+        console.warn('No emsg box present in segment.');
+    } else {
+        emsgBoxes.forEach((emsgBox) => {
+            const unwrap = ({
+                size,
+                type,
+                version,
+                flags,
+                scheme_id_uri,
+                value,
+                timescale,
+                presentation_time,
+                presentation_time_delta,
+                event_duration,
+                id,
+                message_data
+            }) => ({
+                size,
+                type,
+                version,
+                flags,
+                scheme_id_uri,
+                value,
+                timescale,
+                presentation_time,
+                presentation_time_delta,
+                event_duration,
+                id,
+                message_data: (new TextDecoder()).decode(message_data)
+            });
+            console.log(unwrap(emsgBox));
         });
-        console.log(unwrap(emsgBox));
-    });
+    }
 }
+
+const arrayBuffer = new Uint8Array(fs.readFileSync(filePath)).buffer;
+logBoxesFromArrayBuffer(arrayBuffer);
