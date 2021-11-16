@@ -1,10 +1,49 @@
 const fs = require('fs');
+const https = require('https');
 const ISOBoxer = require('codem-isoboxer');
 const argv = require('minimist')(process.argv.slice(2));
 
 const filePath = argv.file;
-if (!filePath) {
-    throw Error('No file argument provided (provide relative path using --file argument).');
+const initUrl = argv.init;
+const segmentUrl = argv.segment;
+if ((filePath && initUrl) || (filePath && segmentUrl)) {
+    throw Error('Cannot use both --file argument and --init or --segment arguments');
+}
+if (initUrl && !segmentUrl) {
+    throw Error('Must pass --segment when using --init');
+}
+if (segmentUrl && !initUrl) {
+    throw Error('Must pass --init when using --segment');
+}
+if (!filePath && !initUrl) {
+    throw Error('No argument provided for segment (either use --file and local path, or --init and --segment for remote URLs)');
+}
+
+function getSegment(url) {
+    return new Promise((resolve, reject) => {
+        https.get(url, {encoding: null}, (response) => {
+            if (response.statusCode >= 300) {
+                reject(Error(`Invalid status code: ${response.statusCode} - ${response.statusMessage}`));
+                response.resume();
+                return;
+            }
+            let data = [];
+            let connectionError;
+            response.on('data', (chunk) => {
+                data.push(chunk);
+            });
+            response.on('error', (error) => {
+                connectionError = error;
+            });
+            response.on('close', () => {
+                if (connectionError) {
+                    reject(connectionError);
+                } else {
+                    resolve(Buffer.concat(data));
+                }
+            });
+        });
+    });
 }
 
 function logBoxesFromArrayBuffer(arrayBuffer) {
@@ -47,5 +86,16 @@ function logBoxesFromArrayBuffer(arrayBuffer) {
     }
 }
 
-const arrayBuffer = new Uint8Array(fs.readFileSync(filePath)).buffer;
-logBoxesFromArrayBuffer(arrayBuffer);
+if (filePath) {
+    const arrayBuffer = new Uint8Array(fs.readFileSync(filePath)).buffer;
+    logBoxesFromArrayBuffer(arrayBuffer);
+} else {
+    const initPromise = getSegment(initUrl);
+    const segmentPromise = getSegment(segmentUrl);
+    Promise.all([initPromise, segmentPromise]).then(([initData, segmentData]) => {
+        const completeData = Buffer.concat([initData, segmentData]);
+        logBoxesFromArrayBuffer(completeData.buffer);
+    }).catch((error) => {
+        throw error;
+    });
+}
