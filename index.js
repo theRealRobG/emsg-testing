@@ -3,6 +3,29 @@ const https = require('https');
 const ISOBoxer = require('codem-isoboxer');
 const argv = require('minimist')(process.argv.slice(2));
 
+const help = argv.help;
+if (help) {
+    const helpMessage = `
+    Simple command line tool for reading emsg boxes in MP4.
+
+    Available commands:
+      --help                  Show this help description.
+
+      --file <local_path>     Specify a local file URL for an MP4 file. This cannot be used
+                              in conjunction with --init and --segment.
+
+      --init <remote_url>     Specify a remote URL for a CMAF init segment. When specifying
+                              --init then --segment must also be specified. This cannot be
+                              used in conjunction with --file.
+
+      --segment <remote_url>  Specify a remote URL for a CMAF segment. When specifying
+                              --segment then --init must also be specified. This cannot be
+                              used in conjunction with --file.
+    `;
+    console.log(helpMessage);
+    return;
+}
+
 const filePath = argv.file;
 const initUrl = argv.init;
 const segmentUrl = argv.segment;
